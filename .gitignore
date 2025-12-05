@@ -1,0 +1,19 @@
+# IntelliJ IDEA
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+
+# Maven / Gradle build output
+target/
+**/target/
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Optional: Maven wrapper caches (一般可不忽略)
+# .mvn/wrapper/maven-wrapper.jar

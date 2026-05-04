@@ -11,6 +11,9 @@ target/
 *.log
 logs/
 
+# Claude Code 本地设置（含密钥）
+.claude/
+
 # OS
 .DS_Store
 Thumbs.db

@@ -18,37 +18,48 @@ import java.util.Arrays;
 @Component
 public class OperationLogAspect {
 
+    private static final String[] SENSITIVE_FIELDS = {"password", "pwd", "secret", "token"};
+
     @Autowired
     private OperateLogMapper operateLogMapper;
 
     @Around("@annotation(com.chy.anno.Log)")
     public Object logOperation(ProceedingJoinPoint joinPoint) throws Throwable {
         long startTime = System.currentTimeMillis();
-        // 执行目标方法
         Object result = joinPoint.proceed();
-        // 计算耗时
         long endTime = System.currentTimeMillis();
         long costTime = endTime - startTime;
 
-        // 构建日志实体
         OperateLog olog = new OperateLog();
-        olog.setOperateEmpId(getCurrentUserId()); // 这里需要你根据实际情况获取当前用户ID
+        olog.setOperateEmpId(CurrentHolder.getCurrentId());
         olog.setOperateTime(LocalDateTime.now());
         olog.setClassName(joinPoint.getTarget().getClass().getName());
         olog.setMethodName(joinPoint.getSignature().getName());
-        olog.setMethodParams(Arrays.toString(joinPoint.getArgs()));
+        olog.setMethodParams(sanitizeArgs(joinPoint.getArgs()));
         olog.setReturnValue(result != null ? result.toString() : "void");
         olog.setCostTime(costTime);
 
-        // 保存日志
         log.info("记录操作日志: {}", olog);
         operateLogMapper.insert(olog);
 
         return result;
     }
 
-    private Integer getCurrentUserId() {
+    private String sanitizeArgs(Object[] args) {
+        if (args == null) return "[]";
+        return Arrays.toString(Arrays.stream(args)
+                .map(this::sanitizeObject)
+                .toArray());
+    }
 
-        return CurrentHolder.getCurrentId();
+    private Object sanitizeObject(Object arg) {
+        if (arg == null) return null;
+        String str = arg.toString().toLowerCase();
+        for (String field : SENSITIVE_FIELDS) {
+            if (str.contains(field)) {
+                return "***";
+            }
+        }
+        return arg;
     }
 }

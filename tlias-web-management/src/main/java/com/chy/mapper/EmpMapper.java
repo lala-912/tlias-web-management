@@ -27,6 +27,9 @@ public interface EmpMapper {
     @MapKey("name")
     List<Map<String, Object>> countEmpGenderData();
 
-    @Select("select id, username from emp where username = #{username} and password = #{password}")
-    Emp selectByUsernameAndPassword(Emp emp);
+    @Select("select id, username, password, name, role from emp where username = #{username}")
+    Emp selectByUsername(String username);
+
+    @Update("update emp set password = #{password} where id = #{id}")
+    void updatePassword(@Param("id") Integer id, @Param("password") String password);
 }

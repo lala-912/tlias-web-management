@@ -1,6 +1,7 @@
 package com.chy.controller;
 
 import com.chy.anno.Log;
+import com.chy.anno.RequireRole;
 import com.chy.pojo.Emp;
 import com.chy.pojo.EmpQueryParam;
 import com.chy.pojo.PageResult;
@@ -38,6 +39,7 @@ public class EmpController {
         return Result.success();
     }
     @Log
+    @RequireRole
     @DeleteMapping
     public Result Delete(@RequestParam List<Integer> ids){
         log.info("删除员工{}", ids);

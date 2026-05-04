@@ -1,6 +1,7 @@
 package com.chy.interceptor;
 
 import com.chy.utils.JwtUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -13,6 +14,10 @@ import org.springframework.web.servlet.HandlerInterceptor;
 @Slf4j
 @Component
 public class TokenInterceptor implements HandlerInterceptor {
+
+    @Autowired
+    private JwtUtils jwtUtils;
+
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
 //        //1. 获取到请求路径
@@ -36,7 +41,7 @@ public class TokenInterceptor implements HandlerInterceptor {
 
         //5. 如果token存在, 校验令牌, 如果校验失败 -> 返回错误信息(响应401状态码)
         try {
-            JwtUtils.parseToken(token);
+            jwtUtils.parseToken(token);
         } catch (Exception e) {
             log.info("令牌非法, 响应401");
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);

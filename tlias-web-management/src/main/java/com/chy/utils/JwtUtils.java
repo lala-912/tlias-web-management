@@ -3,37 +3,39 @@ package com.chy.utils;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 import java.util.Date;
 import java.util.Map;
 
+@Component
 public class JwtUtils {
 
-    private static final String SECRET_KEY = "aXRoZWltYQ=="; // 秘钥
-    private static final long EXPIRATION_TIME = 15 * 60 * 1000; // 15分钟
+    private String secretKey;
+    private long expirationTime;
 
-    /**
-     * 生成JWT令牌
-     * @param claims 令牌中包含的信息
-     * @return 生成的JWT令牌字符串
-     */
-    public static String generateToken(Map<String, Object> claims) {
+    @Value("${jwt.secret}")
+    public void setSecretKey(String secretKey) {
+        this.secretKey = secretKey;
+    }
+
+    @Value("${jwt.expiration}")
+    public void setExpirationTime(long expirationTime) {
+        this.expirationTime = expirationTime;
+    }
+
+    public String generateToken(Map<String, Object> claims) {
         return Jwts.builder()
-                .signWith(SignatureAlgorithm.HS256, SECRET_KEY)
+                .signWith(SignatureAlgorithm.HS256, secretKey)
                 .addClaims(claims)
-                .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
+                .setExpiration(new Date(System.currentTimeMillis() + expirationTime))
                 .compact();
     }
 
-    /**
-     * 解析JWT令牌
-     * @param token 要解析的JWT令牌字符串
-     * @return 包含令牌信息的Claims对象
-     * @throws Exception 如果令牌无效或已过期，则抛出异常
-     */
-    public static Claims parseToken(String token) throws Exception {
+    public Claims parseToken(String token) {
         return Jwts.parser()
-                .setSigningKey(SECRET_KEY)
+                .setSigningKey(secretKey)
                 .parseClaimsJws(token)
                 .getBody();
     }

@@ -8,54 +8,63 @@ import jakarta.servlet.annotation.WebFilter;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 
 @Slf4j
+@Component
 @WebFilter(urlPatterns = "/*")
 public class TokenFilter implements Filter {
+
+    @Autowired
+    private JwtUtils jwtUtils;
+
     @Override
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
         HttpServletRequest request = (HttpServletRequest) servletRequest;
         HttpServletResponse response = (HttpServletResponse) servletResponse;
 
-        //1. 获取到请求路径
-        String requestURI = request.getRequestURI(); // /employee/login
+        String requestURI = request.getRequestURI();
 
-        //2. 判断是否是登录请求, 如果路径中包含 /login, 说明是登录操作, 放行
-        if (requestURI.contains("/login")){
+        // 登录请求放行（精确路径匹配，防止绕过）
+        if ("/login".equals(requestURI)) {
             log.info("登录请求, 放行");
             filterChain.doFilter(request, response);
             return;
         }
 
-        //3. 获取请求头中的token
-        String token = request.getHeader("token");
+        // 刷新和登出也放行（内部自行验证 refreshToken）
+        if ("/refresh".equals(requestURI) || "/logout".equals(requestURI)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
 
-        //4. 判断token是否存在, 如果不存在, 说明用户没有登录, 返回错误信息(响应401状态码)
-        if (token == null || token.isEmpty()){
+        String token = request.getHeader("token");
+        if (token == null || token.isEmpty()) {
             log.info("令牌为空, 响应401");
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return;
         }
 
-        //5. 如果token存在, 校验令牌, 如果校验失败 -> 返回错误信息(响应401状态码)
         try {
-            Claims claims = JwtUtils.parseToken(token);
+            Claims claims = jwtUtils.parseToken(token);
             Integer empId = Integer.valueOf(claims.get("id").toString());
-            CurrentHolder.setCurrentId(empId); //存入
-            log.info("当前登录员工ID: {}, 将其存入ThreadLocal", empId);
+            String role = claims.get("role", String.class);
+            CurrentHolder.setCurrentId(empId);
+            CurrentHolder.setCurrentRole(role != null ? role : "user");
+            log.info("当前登录员工ID: {}, 角色: {}", empId, role);
         } catch (Exception e) {
             log.info("令牌非法, 响应401");
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return;
         }
 
-        //6. 校验通过, 放行
-        log.info("令牌合法, 放行");
-        filterChain.doFilter(request, response);
-
-        //7. 删除ThreadLocal中的数据
-        CurrentHolder.remove();
+        try {
+            filterChain.doFilter(request, response);
+        } finally {
+            CurrentHolder.remove();
+        }
     }
 }

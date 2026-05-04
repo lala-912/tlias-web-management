@@ -1,6 +1,7 @@
 package com.chy.controller;
 
 import com.chy.anno.Log;
+import com.chy.anno.RequireRole;
 import com.chy.pojo.PageResult;
 import com.chy.pojo.Result;
 import com.chy.pojo.Student;
@@ -29,6 +30,7 @@ public class StudentController {
         return Result.success(pageResult);
     }
     @Log
+    @RequireRole
     @DeleteMapping("/{ids}")
     public Result delete(@PathVariable List<Integer> ids){
         studentService.delete(ids);

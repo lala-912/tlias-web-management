@@ -1,19 +1,16 @@
 spring:
   application:
     name: tlias-web-management
-  #配置数据库的连接信息
   datasource:
     url: jdbc:mysql://127.0.0.1:3306/tlias
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: root
-    password: 1234
+    password: ${MYSQL_PASSWORD:1234}
   servlet:
     multipart:
       max-file-size: 10MB
-#      最大请求大小（所有文件和表单数据）
       max-request-size: 100MB
 
-#Mybatis的相关配置
 mybatis:
   mapper-locations: classpath*:/mapper/**/*.xml
   type-aliases-package: com.chy.pojo
@@ -24,6 +21,10 @@ mybatis:
 logging:
   level:
     org.springframework.jdbc.support.JdbcTransactionManager: debug
+
+jwt:
+  secret: ${JWT_SECRET:aXRoZWltYQ==}
+  expiration: 900000
 
 aliyun:
   oss:

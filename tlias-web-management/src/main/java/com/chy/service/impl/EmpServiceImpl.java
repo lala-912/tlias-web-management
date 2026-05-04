@@ -126,7 +126,6 @@ public class EmpServiceImpl implements EmpService {
         Map<String, Object> claims = new HashMap<>();
         claims.put("id", e.getId());
         claims.put("Username", e.getUsername());
-        claims.put("role", e.getRole() != null ? e.getRole() : "user");
         String accessToken = jwtUtils.generateToken(claims);
 
         String rawRefreshToken = UUID.randomUUID().toString().replace("-", "");

@@ -51,10 +51,8 @@ public class TokenFilter implements Filter {
         try {
             Claims claims = jwtUtils.parseToken(token);
             Integer empId = Integer.valueOf(claims.get("id").toString());
-            String role = claims.get("role", String.class);
             CurrentHolder.setCurrentId(empId);
-            CurrentHolder.setCurrentRole(role != null ? role : "user");
-            log.info("当前登录员工ID: {}, 角色: {}", empId, role);
+            log.info("当前登录员工ID: {}", empId);
         } catch (Exception e) {
             log.info("令牌非法, 响应401");
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);

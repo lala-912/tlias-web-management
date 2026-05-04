@@ -1,7 +1,6 @@
 package com.chy.controller;
 
 import com.chy.anno.Log;
-import com.chy.anno.RequireRole;
 import com.chy.pojo.Clazz;
 import com.chy.pojo.ClazzQueryParam;
 import com.chy.pojo.PageResult;
@@ -28,7 +27,6 @@ public class ClazzController{
         return Result.success(pageResult);
     }
     @Log
-    @RequireRole
     @DeleteMapping("/{id}")
     public Result delete(@PathVariable Integer id){
         clazzService.deleteById(id);

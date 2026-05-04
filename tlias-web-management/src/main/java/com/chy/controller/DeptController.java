@@ -1,7 +1,6 @@
 package com.chy.controller;
 
 import com.chy.anno.Log;
-import com.chy.anno.RequireRole;
 import com.chy.pojo.Dept;
 import com.chy.pojo.Result;
 import com.chy.service.DeptService;
@@ -28,7 +27,6 @@ public class DeptController {
         return Result.success(deptList);
     }
     @Log
-    @RequireRole
     @DeleteMapping
     public Result delete(Integer id) {
         log.info("删除部门：{}", id);

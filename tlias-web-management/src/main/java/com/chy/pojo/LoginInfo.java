@@ -11,5 +11,6 @@ public class LoginInfo {
     private Integer id;
     private String username;
     private String name;
-    private String token;
+    private String accessToken;
+    private String refreshToken;
 }

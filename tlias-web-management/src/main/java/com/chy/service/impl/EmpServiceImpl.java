@@ -6,7 +6,9 @@ import com.chy.mapper.EmpMapper;
 import com.chy.pojo.*;
 import com.chy.service.EmpLogService;
 import com.chy.service.EmpService;
+import com.chy.mapper.RefreshTokenMapper;
 import com.chy.utils.JwtUtils;
+import com.chy.utils.Sha256Utils;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +23,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -32,6 +35,8 @@ public class EmpServiceImpl implements EmpService {
     private EmpExprMapper empExprMapper;
     @Autowired
     private EmpLogService empLogService;
+    @Autowired
+    private RefreshTokenMapper refreshTokenMapper;
     @Override
     public PageResult<Emp> page(EmpQueryParam empQueryParam) {
 //        设置分页参数
@@ -92,17 +97,51 @@ public class EmpServiceImpl implements EmpService {
 
     @Override
     public LoginInfo login(Emp emp) {
-        //调用mapper接口查询员工信息
         Emp e = empMapper.selectByUsernameAndPassword(emp);
-        //判断：是否存在员工
         if(e != null){
             log.info("登陆成功，员工信息：{}", e);
+            // 生成 access token（15分钟）
             Map<String,Object> claims = new HashMap<>();
             claims.put("id",e.getId());
             claims.put("Username",e.getUsername());
-            String jwt = JwtUtils.generateToken(claims);
-            return new LoginInfo(e.getId(), e.getUsername(), e.getName(), jwt);
+            String accessToken = JwtUtils.generateToken(claims);
+
+            // 生成 refresh token（7天）
+            String rawRefreshToken = UUID.randomUUID().toString().replace("-", "");
+            String refreshTokenHash = Sha256Utils.hash(rawRefreshToken);
+            RefreshToken rt = new RefreshToken();
+            rt.setUserId(e.getId());
+            rt.setTokenHash(refreshTokenHash);
+            rt.setExpiresAt(LocalDateTime.now().plusDays(7));
+            refreshTokenMapper.insert(rt);
+
+            return new LoginInfo(e.getId(), e.getUsername(), e.getName(), accessToken, rawRefreshToken);
         }
         return null;
+    }
+
+    public String refreshAccessToken(String rawRefreshToken) {
+        String hash = Sha256Utils.hash(rawRefreshToken);
+        // 检查黑名单
+        if (refreshTokenMapper.countInBlacklist(hash) > 0) {
+            log.warn("refresh token 已被列入黑名单");
+            return null;
+        }
+        RefreshToken rt = refreshTokenMapper.findValidToken(hash);
+        if (rt == null) {
+            log.warn("refresh token 无效或已过期");
+            return null;
+        }
+        log.info("refresh token 有效，刷新 access token, userId={}", rt.getUserId());
+        Map<String,Object> claims = new HashMap<>();
+        claims.put("id", rt.getUserId());
+        claims.put("Username", ""); //重新生成时从 refresh_token 表无法得知 username，可以扩展表字段
+        return JwtUtils.generateToken(claims);
+    }
+
+    public void logout(String rawRefreshToken) {
+        String hash = Sha256Utils.hash(rawRefreshToken);
+        refreshTokenMapper.addToBlacklist(hash);
+        log.info("refresh token 已加入黑名单");
     }
 }

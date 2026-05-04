@@ -3,10 +3,10 @@ spring:
     name: tlias-web-management
   #配置数据库的连接信息
   datasource:
-    url: jdbc:mysql://mysql:3306/tlias
+    url: jdbc:mysql://127.0.0.1:3306/tlias
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: root
-    password: 123
+    password: 1234
   servlet:
     multipart:
       max-file-size: 10MB
